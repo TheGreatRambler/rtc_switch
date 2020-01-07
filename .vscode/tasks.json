@@ -1,0 +1,80 @@
+{
+	"version": "2.0.0",
+	"tasks": [{
+			"label": "Build PC Application",
+			"type": "shell",
+			"command": "make -j 4 -C '${workspaceFolder}/pc_application'",
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [{
+				"base": "$gcc",
+				"fileLocation": ["autoDetect", "${workspaceFolder}/pc_application"]
+			}],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Force build PC Application",
+			"type": "shell",
+			"command": "make -B -j 4 -C ${workspaceFolder}/pc_application",
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [{
+				"base": "$gcc",
+				"fileLocation": ["autoDetect", "${workspaceFolder}/pc_application"]
+			}],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Build Sysmodule",
+			"type": "shell",
+			"promptOnClose": true,
+			"command": "make -j 4 -C '${workspaceFolder}/sysmodule'",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": [{
+				"base": "$gcc",
+				"fileLocation": ["autoDetect", "${workspaceFolder}"]
+			}],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		}, {
+			"label": "Force build Sysmodule",
+			"type": "shell",
+			"promptOnClose": true,
+			"command": "make -j 4 -C '${workspaceFolder}/sysmodule' -B",
+			"presentation": {
+				"reveal": "always",
+				"panel": "dedicated"
+			},
+			"problemMatcher": [{
+				"base": "$gcc",
+				"fileLocation": ["autoDetect", "${workspaceFolder}"]
+			}],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+
+	]
+}

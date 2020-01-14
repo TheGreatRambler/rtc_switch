@@ -2,15 +2,34 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
+#include <zpp.hpp>
 
-class CommunicateWithPC {
-	CommunicateWithPC();
-};
+#include "serializeData.hpp"
+
+#define SERVER_PORT 6978
+
+class CommunicateWithSwitch {
+private:
+	struct sockaddr_in serv_addr;
+
+	int sockfd = 0;
+
+	uint8_t connectedToServer;
+
+	bool sendSocketHelper(void* data, uint16_t size);
+
+public:
+	CommunicateWithSwitch();
+
+	void setIpAddress(char* ip);
+
+	~CommunicateWithSwitch();
+}

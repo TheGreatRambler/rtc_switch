@@ -1,8 +1,18 @@
-#include "communicateWithPC.hpp"
+#include "communicateWithSwitch.hpp"
 
-// https://gist.github.com/browny/5211329
+// Based on this https://github.com/TheGreatRambler/nx-TAS/blob/dev/source/communicate_with_pc.cpp
+void CommunicateWithPC::unserializeData(uint8_t* buf, uint16_t bufSize, DataFlag flag) {
+	// The buffer itself
+	// https://github.com/niXman/yas/blob/master/include/yas/buffers.hpp#L67
+	// https://github.com/niXman/yas/blob/master/examples/one_func_cond/main.cpp
+	if(flag == DataFlag::RETURN_MEMORY_INFO) {
+		// Do whatever
+	}
+}
+
 CommunicateWithPC::CommunicateWithPC() {
 	// https://gist.github.com/browny/5211329
+	// THIS IS THE SERVER
 	if((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
 		// Socket creation failed
 	}
@@ -29,8 +39,36 @@ CommunicateWithPC::CommunicateWithPC() {
 	socketConnected = false;
 }
 
-void CommunicateWithPC::handleSocketError() {
-	// Nothing right now
+bool CommunicateWithPC::readSocketHelper(void* data, uint16_t size) {
+	// Small helper for a commonly used operation
+	int count;
+	// Check if socket has any data
+	ioctl(listenfd, FIONREAD, &count);
+	if(count == 0) {
+		// No data yet
+		// This shouldn't occur if waiting was done beforehand
+		return 1;
+	} else if(count == -1) {
+		// There was an error
+		handleZedNetError();
+		return 1;
+	}
+	int res = recv(listenfd, data, size, MSG_WAITALL);
+	if(res == -1) {
+		// An error occured
+		handleZedNetError();
+		return 1;
+	} else {
+		// Data was recieved
+		if(res == size) {
+			// Data was the right size
+			return 0;
+		} else {
+			// Data was the wrong size
+			handleZedNetError();
+			return 1;
+		}
+	}
 }
 
 bool CommunicateWithPC::blockUntilReady() {
@@ -43,51 +81,10 @@ bool CommunicateWithPC::blockUntilReady() {
 	timeout.tv_sec  = 1;
 	timeout.tv_usec = 0;
 	if(select(FD_SETSIZE, &writefd, NULL, NULL, &timeout)) {
-		handleSocketError();
+		handleZedNetError();
 		return 1;
 	}
 	return 0;
-}
-
-bool CommunicateWithPC::readSocketHelper(void* data, uint16_t size) {
-	// Small helper for a commonly used operation
-	int count;
-	// Check if socket has any data
-	ioctl(listenfd, FIONREAD, &count);
-	if(count == 0) {
-		// No data yet
-		// This shouldn't occur if waiting was done beforehand
-		return 1;
-	} else if(count == -1) {
-		// There was an error
-		handleSocketError();
-		return 1;
-	}
-	int res = recv(listenfd, data, size, MSG_WAITALL);
-	if(res == -1) {
-		// An error occured
-		handleSocketError();
-		return 1;
-	} else {
-		// Data was recieved
-		if(res == size) {
-			// Data was the right size
-			return 0;
-		} else {
-			// Data was the wrong size
-			handleSocketError();
-			return 1;
-		}
-	}
-}
-
-void CommunicateWithPC::unserializeData(uint8_t* buf, uint16_t bufSize, DataFlag flag) {
-	// The buffer itself
-	// https://github.com/niXman/yas/blob/master/include/yas/buffers.hpp#L67
-	// https://github.com/niXman/yas/blob/master/examples/one_func_cond/main.cpp
-	if(flag == DataFlag::WRITE_DATA) {
-		// Write data
-	}
 }
 
 void CommunicateWithPC::listenForPCCommands() {
@@ -129,9 +126,13 @@ void CommunicateWithPC::listenForPCCommands() {
 		// Specifically non blocking
 		int res = accept(listenfd, NULL, NULL);
 		if(res == -1) {
-			if(errno != EWOULDBLOCK) {
-				// It isn't just that there are no messages, there is a genuine error
-				handleSocketError();
+			if(errno == EWOULDBLOCK) {
+				// There are no connections, so it's fine
+				return;
+			} else {
+				// Genuine error
+				handleZedNetError();
+				return;
 			}
 		} else {
 			// Connection recieved and ready
@@ -143,4 +144,7 @@ void CommunicateWithPC::listenForPCCommands() {
 	}
 }
 
-CommunicateWithPC::~CommunicateWithPC() { }
+CommunicateWithPC::~CommunicateWithPC() {
+	// Close socket
+	close(connfd);
+}
